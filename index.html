@@ -1,9 +1,42 @@
 <html>
 <head>
     <title>Partial Products Area Model</title>
+    <style>
+        /* Add your styles here */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .input-section,
+        .output-section {
+            margin: 20px 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>Partial Products Area Model</h1>
-    <p>This content is a model for teaching multiplication using partial products.</p>
+    <div class="container">
+        <h1>Partial Products Area Model</h1>
+        <div class="input-section">
+            <input type="number" id="firstNumber" placeholder="Enter first number" />
+            <input type="number" id="secondNumber" placeholder="Enter second number" />
+            <button id="calculateBtn">Calculate</button>
+        </div>
+        <div class="output-section">
+            <h2>Result:</h2>
+            <div id="result"></div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            const firstNumber = parseInt(document.getElementById('firstNumber').value);
+            const secondNumber = parseInt(document.getElementById('secondNumber').value);
+            const product = firstNumber * secondNumber;
+            const resultElement = document.getElementById('result');
+            resultElement.textContent = `The product of ${firstNumber} and ${secondNumber} is ${product}.`;
+        });
+    </script>
 </body>
 </html>

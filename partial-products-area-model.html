@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Area Model for Multiplication</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Nunito', sans-serif; background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); min-height: 100vh; }
+
+    /* Layout */
+    .app { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+    .card { background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px; }
+
+    /* Typography */
+    h1 { font-size: 2rem; font-weight: 800; text-align: center; color: #1e293b; margin-bottom: 6px; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 32px; font-size: 1rem; }
+
+    /* Level Toggle */
+    .level-toggle { display: flex; justify-content: center; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; border: none; font-family: 'Nunito', sans-serif; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-level { background: #e2e8f0; color: #475569; }
+    .btn-level:hover:not(:disabled) { background: #cbd5e1; }
+    .btn-level.active-blue { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.3); transform: scale(1.05); }
+    .btn-level.active-green { background: #22c55e; color: white; box-shadow: 0 4px 12px rgba(34,197,94,0.3); transform: scale(1.05); }
+    .btn-blue { background: #3b82f6; color: white; } .btn-blue:hover:not(:disabled) { background: #2563eb; }
+    .btn-gray  { background: #6b7280; color: white; } .btn-gray:hover:not(:disabled)  { background: #4b5563; }
+    .btn-purple{ background: #8b5cf6; color: white; } .btn-purple:hover:not(:disabled){ background: #7c3aed; }
+    .btn-indigo{ background: #6366f1; color: white; } .btn-indigo:hover:not(:disabled){ background: #4f46e5; }
+    .btn-teal  { background: #14b8a6; color: white; } .btn-teal:hover:not(:disabled)  { background: #0d9488; }
+    .btn-green2{ background: #16a34a; color: white; } .btn-green2:hover:not(:disabled){ background: #15803d; }
+    .btn-diff  { background: #e2e8f0; color: #475569; font-size: 0.85rem; padding: 8px 16px; }
+    .btn-diff:hover { background: #cbd5e1; }
+    .btn-diff.active-easy   { background: #22c55e; color: white; transform: scale(1.05); box-shadow: 0 3px 10px rgba(34,197,94,0.3); }
+    .btn-diff.active-medium { background: #f59e0b; color: white; transform: scale(1.05); box-shadow: 0 3px 10px rgba(245,158,11,0.3); }
+    .btn-diff.active-hard   { background: #ef4444; color: white; transform: scale(1.05); box-shadow: 0 3px 10px rgba(239,68,68,0.3); }
+
+    /* Sections */
+    .section { background: #f8fafc; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .section-green  { background: #f0fdf4; }
+    .section-blue   { background: #eff6ff; }
+    .section-yellow { background: #fefce8; }
+    .section-grad   { background: linear-gradient(135deg, #f0fdf4, #f0fdfa); }
+    .section-title  { font-size: 1.1rem; font-weight: 700; color: #374151; margin-bottom: 16px; }
+
+    /* Number inputs row */
+    .inputs-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+    .input-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .input-label { font-size: 0.8rem; font-weight: 600; color: #6b7280; }
+    .num-input { width: 80px; height: 50px; font-size: 1.5rem; font-family: 'Nunito', sans-serif; font-weight: 800; text-align: center; border: 2px solid #93c5fd; border-radius: 10px; outline: none; }
+    .num-input:focus { border-color: #3b82f6; }
+    .num-input.purple { border-color: #c4b5fd; }
+    .num-input.purple:focus { border-color: #8b5cf6; }
+    .multiply-sign { font-size: 2rem; font-weight: 800; color: #cbd5e1; margin-top: 24px; }
+
+    /* Buttons row */
+    .btns-row { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+    /* Dimensions display */
+    .dims-box { display: flex; justify-content: center; align-items: center; gap: 32px; flex-wrap: wrap; }
+    .dim-val { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+    .dim-val.blue { color: #3b82f6; }
+    .dim-val.purple { color: #8b5cf6; }
+    .dim-sub { font-size: 0.85rem; color: #6b7280; }
+
+    /* Area Model grid */
+    .model-layout { display: flex; flex-direction: row; gap: 32px; flex-wrap: wrap; }
+    .model-grid-wrap { flex: 1; min-width: 280px; }
+    .model-calcs { width: 280px; flex-shrink: 0; }
+
+    .grid-outer { display: inline-block; position: relative; }
+    .col-headers { display: flex; margin-left: 80px; margin-bottom: 4px; }
+    .col-header { text-align: center; font-weight: 700; color: #8b5cf6; border-bottom: 2px solid #c4b5fd; font-size: 0.95rem; }
+
+    .grid-row { display: flex; align-items: center; margin-bottom: 4px; }
+    .row-header { text-align: center; font-weight: 700; color: #3b82f6; border-right: 2px solid #93c5fd; margin-right: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; }
+
+    .cell { border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; transition: all 0.5s; border-radius: 6px; min-width: 80px; min-height: 60px; }
+    .cell-gray   { background: #f3f4f6; border-color: #d1d5db; opacity: 0.5; }
+    .cell-r0c0   { background: #fecaca; border-color: #f87171; opacity: 1; }
+    .cell-r0c1   { background: #bfdbfe; border-color: #60a5fa; opacity: 1; }
+    .cell-r0c2   { background: #bbf7d0; border-color: #4ade80; opacity: 1; }
+    .cell-r1c0   { background: #e9d5ff; border-color: #c084fc; opacity: 1; }
+    .cell-r1c1   { background: #fef08a; border-color: #facc15; opacity: 1; }
+    .cell-r1c2   { background: #fbcfe8; border-color: #f472b6; opacity: 1; }
+    .cell-r2c0   { background: #fed7aa; border-color: #fb923c; opacity: 1; }
+    .cell-r2c1   { background: #a5f3fc; border-color: #22d3ee; opacity: 1; }
+    .cell-r2c2   { background: #d9f99d; border-color: #86efac; opacity: 1; }
+    .cell-active { outline: 3px solid #facc15; outline-offset: 2px; }
+    .cell-text-sm { font-size: 0.75rem; opacity: 0.8; margin-bottom: 2px; }
+    .cell-text-lg { font-size: 1.1rem; font-weight: 800; }
+    .cell-inner { text-align: center; }
+
+    .total-area { text-align: center; margin-top: 12px; font-size: 1.2rem; font-weight: 800; color: #16a34a; }
+
+    /* Step calc sidebar */
+    .calc-item { padding: 10px 14px; border-radius: 8px; transition: all 0.5s; font-family: monospace; font-size: 0.9rem; }
+    .calc-item.done   { background: #bbf7d0; transform: scale(1.03); }
+    .calc-item.active { background: #86efac; transform: scale(1.06); box-shadow: 0 0 0 2px #facc15; }
+    .calc-item.idle   { background: white; opacity: 0.5; }
+    .calc-check { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; font-size: 0.75rem; color: #4b5563; }
+    .calc-total { margin-top: 20px; padding: 16px; background: #dbeafe; border-radius: 10px; text-align: center; }
+    .calc-total-label { font-size: 1rem; font-weight: 700; color: #1e40af; margin-bottom: 4px; }
+    .calc-total-sum   { font-size: 0.85rem; color: #1d4ed8; margin-bottom: 6px; }
+    .calc-total-val   { font-size: 1.5rem; font-weight: 800; color: #1e40af; }
+
+    /* Practice mode */
+    .practice-header { font-size: 1.4rem; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .practice-sub { color: #64748b; margin-bottom: 20px; }
+    .diff-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .problem-display { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 8px; }
+    .prob-num { font-size: 2rem; font-weight: 800; }
+    .prob-num.blue { color: #3b82f6; }
+    .prob-num.purple { color: #8b5cf6; }
+    .prob-q { font-size: 2rem; font-weight: 800; color: #d1d5db; }
+
+    /* Practice grid inputs */
+    .p-col-header-wrap { display: flex; margin-bottom: 4px; }
+    .p-col-header-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .p-row-wrap { display: flex; align-items: center; margin-bottom: 8px; }
+    .p-row-label { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+
+    .p-input { font-family: 'Nunito', sans-serif; font-weight: 700; text-align: center; border: 2px solid; border-radius: 8px; outline: none; font-size: 0.95rem; }
+    .p-input:focus { border-color: #3b82f6; }
+    .p-input.correct { border-color: #16a34a; background: #f0fdf4; }
+    .p-input.wrong   { border-color: #dc2626; background: #fef2f2; }
+    .p-input.purple  { border-color: #c4b5fd; color: #7c3aed; width: 60px; height: 38px; }
+    .p-input.blue    { border-color: #93c5fd; color: #1d4ed8; width: 60px; height: 38px; }
+    .p-input.cell    { border-color: #d1d5db; width: 80px; height: 48px; font-size: 1rem; }
+
+    .p-cell { border: 2px solid #d1d5db; background: #f9fafb; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px; min-width: 80px; min-height: 70px; transition: border-color 0.2s, background 0.2s; }
+    .p-cell.correct { border-color: #16a34a; background: #f0fdf4; }
+    .p-cell.wrong   { border-color: #dc2626; background: #fef2f2; }
+
+    .hint-box { font-size: 0.75rem; color: #4b5563; background: #fef9c3; padding: 4px 8px; border-radius: 6px; }
+    .hint-btn { font-size: 0.75rem; color: #2563eb; background: none; border: none; cursor: pointer; text-decoration: underline; font-family: 'Nunito', sans-serif; }
+    .hint-btn:hover { color: #1d4ed8; }
+
+    /* Final answer */
+    .final-row { display: flex; justify-content: center; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .final-eq  { font-size: 1.3rem; font-weight: 700; color: #374151; }
+    .final-input { width: 120px; height: 56px; font-size: 1.5rem; font-family: 'Nunito', sans-serif; font-weight: 800; text-align: center; border: 2px solid #9ca3af; border-radius: 10px; outline: none; }
+    .final-input:focus { border-color: #3b82f6; }
+    .final-input.correct { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+    .final-input.wrong   { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
+    .icon-check { color: #16a34a; font-size: 1.8rem; }
+    .icon-x     { color: #dc2626; font-size: 1.8rem; }
+
+    .hint-final { margin-top: 12px; text-align: center; font-size: 0.85rem; color: #6b7280; }
+    .hint-final-box { display: inline-block; background: #fef9c3; padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; color: #374151; margin-top: 6px; }
+
+    /* All correct banner */
+    .all-correct { background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 20px; text-align: center; margin-top: 16px; }
+    .all-correct-title { font-size: 1.5rem; font-weight: 800; color: #15803d; margin-bottom: 6px; }
+    .all-correct-sub   { color: #16a34a; margin-bottom: 14px; }
+
+    /* Info popup overlay */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+    .popup { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-width: 640px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 28px; }
+    .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .popup-title  { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+    .popup-close  { background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1.5rem; line-height: 1; padding: 4px 8px; border-radius: 6px; }
+    .popup-close:hover { background: #f1f5f9; color: #374151; }
+    .info-section { margin-bottom: 18px; }
+    .info-h { font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
+    .info-h.indigo  { color: #4f46e5; }
+    .info-h.green   { color: #15803d; }
+    .info-h.blue    { color: #1d4ed8; }
+    .info-h.purple  { color: #7c3aed; }
+    .info-h.red     { color: #dc2626; }
+    .info-p { font-size: 0.9rem; color: #4b5563; line-height: 1.6; }
+    .info-code { display: inline-block; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+    .info-ul { list-style: disc; padding-left: 20px; font-size: 0.9rem; color: #4b5563; line-height: 1.8; }
+    .popup-footer { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 1.5rem; }
+      .card { padding: 20px 14px; }
+      .model-layout { flex-direction: column; }
+      .model-calcs { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const CELL_COLORS = [
+  ['r0c0','r0c1','r0c2'],
+  ['r1c0','r1c1','r1c2'],
+  ['r2c0','r2c1','r2c2'],
+];
+
+function CheckIcon() { return <span style={{color:'#16a34a',fontSize:'1.5rem',fontWeight:800}}>✓</span>; }
+function XIcon()    { return <span style={{color:'#dc2626',fontSize:'1.5rem',fontWeight:800}}>✗</span>; }
+
+function parseNumber(num) {
+  const digits = num.split('').reverse();
+  return digits.map((digit, index) => ({
+    digit: parseInt(digit),
+    placeValue: Math.pow(10, index),
+    value: parseInt(digit) * Math.pow(10, index)
+  })).reverse().filter(p => p.value > 0);
+}
+
+function PartialProductsApp() {
+  const [level, setLevel] = useState(1);
+  const [difficulty, setDifficulty] = useState('easy');
+  const [num1, setNum1] = useState('23');
+  const [num2, setNum2] = useState('45');
+  const [showModel, setShowModel] = useState(false);
+  const [animationStep, setAnimationStep] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [showCalculations, setShowCalculations] = useState(true);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+
+  const [userDimensions, setUserDimensions] = useState({});
+  const [userProducts, setUserProducts] = useState({});
+  const [userFinalAnswer, setUserFinalAnswer] = useState('');
+  const [showHints, setShowHints] = useState({});
+  const [checkAnswers, setCheckAnswers] = useState(false);
+  const [allCorrect, setAllCorrect] = useState(false);
+
+  const num1Parts = parseNumber(num1 || '0');
+  const num2Parts = parseNumber(num2 || '0');
+
+  const partialProducts = [];
+  num1Parts.forEach((part1, i) => {
+    num2Parts.forEach((part2, j) => {
+      partialProducts.push({
+        factor1: part1.value, factor2: part2.value,
+        product: part1.value * part2.value,
+        row: i, col: j,
+        calculation: `${part1.value} × ${part2.value} = ${part1.value * part2.value}`,
+        id: `${i}-${j}`
+      });
+    });
+  });
+
+  const finalAnswer = partialProducts.reduce((s, p) => s + p.product, 0);
+  const totalNum1 = parseInt(num1) || 1;
+  const totalNum2 = parseInt(num2) || 1;
+
+  function getCellClass(row, col) {
+    const idx = row * num2Parts.length + col;
+    if (animationStep === 0) return 'cell cell-gray';
+    if (idx < animationStep) {
+      const base = CELL_COLORS[row % 3]?.[col % 3] || 'r0c0';
+      const active = idx === animationStep - 1 ? ' cell-active' : '';
+      return `cell cell-${base}${active}`;
+    }
+    return 'cell cell-gray';
+  }
+
+  function startAnimation() {
+    setShowModel(true);
+    setAnimationStep(0);
+    setIsAnimating(true);
+    let step = 0;
+    const timer = setInterval(() => {
+      step++;
+      setAnimationStep(step);
+      if (step >= partialProducts.length) { setIsAnimating(false); clearInterval(timer); }
+    }, 1800);
+  }
+
+  function reset() {
+    setShowModel(false); setAnimationStep(0); setIsAnimating(false);
+    setUserDimensions({}); setUserProducts({}); setUserFinalAnswer('');
+    setShowHints({}); setCheckAnswers(false); setAllCorrect(false);
+  }
+
+  function generateRandom(diff) {
+    let n1, n2;
+    if (diff === 'easy') { n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*90)+10; }
+    else if (diff === 'medium') { n1 = Math.floor(Math.random()*90)+10; n2 = Math.floor(Math.random()*900)+100; }
+    else { n1 = Math.floor(Math.random()*900)+100; n2 = Math.floor(Math.random()*900)+100; }
+    setNum1(n1.toString()); setNum2(n2.toString()); reset();
+  }
+
+  function switchLevel(newLevel) {
+    setLevel(newLevel); reset();
+    if (newLevel === 2) {
+      setDifficulty('easy');
+      const n1 = Math.floor(Math.random()*90)+10;
+      const n2 = Math.floor(Math.random()*90)+10;
+      setNum1(n1.toString()); setNum2(n2.toString());
+    }
+  }
+
+  function checkLevel2Answers() {
+    setCheckAnswers(true);
+    const dimOk = num1Parts.every((p,i) => parseInt(userDimensions['row-'+i]) === p.value)
+               && num2Parts.every((p,i) => parseInt(userDimensions['col-'+i]) === p.value);
+    const prodOk = partialProducts.every(pp => parseInt(userProducts[pp.id]) === pp.product);
+    const finalOk = parseInt(userFinalAnswer) === finalAnswer;
+    if (dimOk && prodOk && finalOk) setAllCorrect(true);
+  }
+
+  function showHint(key) { setShowHints(prev => ({...prev, [key]: true})); }
+
+  return (
+    <div className="app">
+      <div className="card">
+        <h1>Area Model for Multiplication</h1>
+        <p className="subtitle">Visualize multiplication as the area of a rectangle divided into sections</p>
+
+        {/* Level Toggle */}
+        <div className="level-toggle">
+          <button className={`btn btn-level ${level===1?'active-blue':''}`} onClick={()=>switchLevel(1)}>📺 Level 1: Demo Mode</button>
+          <button className={`btn btn-level ${level===2?'active-green':''}`} onClick={()=>switchLevel(2)}>✏️ Level 2: Practice Mode</button>
+        </div>
+
+        {/* ── LEVEL 1 ── */}
+        {level === 1 && <>
+          <div className="section">
+            <div className="section-title">Choose Your Numbers</div>
+            <div className="inputs-row">
+              <div className="input-group">
+                <span className="input-label">Height</span>
+                <input className="num-input" type="text" value={num1}
+                  onChange={e=>{ if(/^\d{0,3}$/.test(e.target.value)){setNum1(e.target.value);reset();} }} placeholder="23" />
+              </div>
+              <span className="multiply-sign">×</span>
+              <div className="input-group">
+                <span className="input-label">Width</span>
+                <input className="num-input purple" type="text" value={num2}
+                  onChange={e=>{ if(/^\d{0,3}$/.test(e.target.value)){setNum2(e.target.value);reset();} }} placeholder="45" />
+              </div>
+            </div>
+            <div className="btns-row">
+              <button className="btn btn-blue" onClick={startAnimation} disabled={!num1||!num2||isAnimating}>
+                ▶ {isAnimating?'Animating…':'Show Area Model'}
+              </button>
+              <button className="btn btn-gray" onClick={reset}>↺ Reset</button>
+              <button className="btn btn-purple" onClick={()=>setShowCalculations(s=>!s)}>
+                {showCalculations?'Hide':'Show'} Calculations
+              </button>
+              <button className="btn btn-indigo" onClick={()=>setShowInfoPopup(true)}>ℹ How It Works</button>
+            </div>
+          </div>
+
+          {showModel && num1 && num2 && <>
+            <div className="section section-yellow">
+              <div className="section-title" style={{textAlign:'center'}}>Rectangle Dimensions</div>
+              <div className="dims-box">
+                <div style={{textAlign:'center'}}>
+                  <div className="dim-val blue">Height: {num1}</div>
+                  <div className="dim-sub">= {num1Parts.map(p=>p.value).join(' + ')}</div>
+                </div>
+                <span style={{fontSize:'1.5rem',color:'#cbd5e1',fontWeight:800}}>×</span>
+                <div style={{textAlign:'center'}}>
+                  <div className="dim-val purple">Width: {num2}</div>
+                  <div className="dim-sub">= {num2Parts.map(p=>p.value).join(' + ')}</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="model-layout">
+              <div className="model-grid-wrap section section-green" style={{padding:24}}>
+                <div className="section-title" style={{textAlign:'center'}}>Area Model</div>
+                <div style={{overflowX:'auto'}}>
+                  <div className="grid-outer">
+                    <div className="col-headers">
+                      {num2Parts.map((p,i)=>(
+                        <div key={i} className="col-header"
+                          style={{width: Math.max((p.value/totalNum2)*400,80)+'px', minWidth:'80px'}}>
+                          {p.value}
+                        </div>
+                      ))}
+                    </div>
+                    {num1Parts.map((part1,row)=>(
+                      <div key={row} className="grid-row">
+                        <div className="row-header"
+                          style={{width:'75px', height:Math.max((part1.value/totalNum1)*280,60)+'px'}}>
+                          {part1.value}
+                        </div>
+                        {num2Parts.map((part2,col)=>{
+                          const pp = partialProducts.find(p=>p.row===row&&p.col===col);
+                          const idx = row*num2Parts.length+col+1;
+                          return (
+                            <div key={col} className={getCellClass(row,col)}
+                              style={{
+                                width:Math.max((part2.value/totalNum2)*400,80)+'px',
+                                height:Math.max((part1.value/totalNum1)*280,60)+'px',
+                                minWidth:'80px', minHeight:'60px'
+                              }}>
+                              {idx <= animationStep && pp &&
+                                <div className="cell-inner">
+                                  <div className="cell-text-sm">{part1.value}×{part2.value}</div>
+                                  <div className="cell-text-lg">{pp.product}</div>
+                                </div>
+                              }
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                    {animationStep >= partialProducts.length && partialProducts.length > 0 &&
+                      <div className="total-area">Total Area = {finalAnswer}</div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              {showCalculations &&
+                <div className="model-calcs section section-blue" style={{padding:20}}>
+                  <div className="section-title">Step-by-Step Calculation</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                    {partialProducts.map((pp,i)=>{
+                      const idx=i+1;
+                      const cls = idx<animationStep?'done':idx===animationStep?'active':'idle';
+                      return (
+                        <div key={i} className={`calc-item ${cls}`}>
+                          <div>{pp.calculation}</div>
+                          {idx<=animationStep&&
+                            <div className="calc-check"><span>Area of section</span><CheckIcon/></div>
+                          }
+                        </div>
+                      );
+                    })}
+                    {animationStep>=partialProducts.length && partialProducts.length>0 &&
+                      <div className="calc-total">
+                        <div className="calc-total-label">Total Area:</div>
+                        <div className="calc-total-sum">{partialProducts.map(p=>p.product).join(' + ')}</div>
+                        <div className="calc-total-val">= {finalAnswer}</div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </>}
+        </>}
+
+        {/* ── LEVEL 2 ── */}
+        {level === 2 && <>
+          <div className="section section-grad">
+            <div className="practice-header">🎯 Practice Mode</div>
+            <div className="practice-sub">Fill in all the dimensions, partial products, and final answer!</div>
+
+            <div className="diff-row">
+              {[['easy','😊 Easy (2×2 digits)'],['medium','🤔 Medium (2×3 digits)'],['hard','🔥 Hard (3×3 digits)']].map(([d,label])=>(
+                <button key={d} className={`btn btn-diff active-${d==='easy'&&difficulty==='easy'?'easy':d==='medium'&&difficulty==='medium'?'medium':d==='hard'&&difficulty==='hard'?'hard':''}`}
+                  onClick={()=>{setDifficulty(d);generateRandom(d);}}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="problem-display">
+              <span className="prob-num blue">{num1}</span>
+              <span className="multiply-sign" style={{marginTop:0}}>×</span>
+              <span className="prob-num purple">{num2}</span>
+              <span className="prob-q">=</span>
+              <span className="prob-q">?</span>
+            </div>
+
+            <div className="btns-row" style={{marginTop:12}}>
+              <button className="btn btn-teal" onClick={()=>generateRandom(difficulty)}>↺ New Problem</button>
+              <button className="btn btn-green2" onClick={checkLevel2Answers} disabled={allCorrect}>✓ Check Answers</button>
+            </div>
+
+            {allCorrect &&
+              <div className="all-correct" style={{marginTop:20}}>
+                <div className="all-correct-title">🎉 Perfect! All Correct! 🎉</div>
+                <div className="all-correct-sub">Great job understanding the area model!</div>
+                <button className="btn btn-green2" onClick={()=>generateRandom(difficulty)}>Try Another Problem</button>
+              </div>
+            }
+          </div>
+
+          {/* Practice grid */}
+          <div className="section section-green" style={{overflowX:'auto'}}>
+            <div className="section-title" style={{textAlign:'center'}}>Fill in the Dimensions and Products</div>
+            <div style={{display:'flex',justifyContent:'center'}}>
+              <div>
+                {/* Column headers */}
+                <div style={{display:'flex',marginLeft:'120px',marginBottom:'6px'}}>
+                  {num2Parts.map((p,i)=>{
+                    const key='col-'+i;
+                    const isOk=checkAnswers&&parseInt(userDimensions[key])===p.value;
+                    const isBad=checkAnswers&&userDimensions[key]&&parseInt(userDimensions[key])!==p.value;
+                    return (
+                      <div key={i} className="p-col-header-cell"
+                        style={{width:Math.max((p.value/totalNum2)*380,80)+'px',minWidth:'80px'}}>
+                        <input type="text" value={userDimensions[key]||''}
+                          onChange={e=>{ if(/^\d{0,3}$/.test(e.target.value)) setUserDimensions(prev=>({...prev,[key]:e.target.value})); }}
+                          className={`p-input purple ${isOk?'correct':isBad?'wrong':''}`}
+                          placeholder="?" disabled={allCorrect} />
+                        {showHints[key] && <div className="hint-box">Hint: {p.value}</div>}
+                        {!showHints[key]&&checkAnswers&&isBad&&
+                          <button className="hint-btn" onClick={()=>showHint(key)}>Show hint</button>}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Rows */}
+                {num1Parts.map((part1,row)=>{
+                  const rowKey='row-'+row;
+                  const isRowOk=checkAnswers&&parseInt(userDimensions[rowKey])===part1.value;
+                  const isRowBad=checkAnswers&&userDimensions[rowKey]&&parseInt(userDimensions[rowKey])!==part1.value;
+                  return (
+                    <div key={row} className="p-row-wrap" style={{marginBottom:'8px'}}>
+                      <div className="p-row-label"
+                        style={{width:'115px',height:Math.max((part1.value/totalNum1)*280,70)+'px',minHeight:'70px'}}>
+                        <input type="text" value={userDimensions[rowKey]||''}
+                          onChange={e=>{ if(/^\d{0,3}$/.test(e.target.value)) setUserDimensions(prev=>({...prev,[rowKey]:e.target.value})); }}
+                          className={`p-input blue ${isRowOk?'correct':isRowBad?'wrong':''}`}
+                          placeholder="?" disabled={allCorrect} />
+                        {showHints[rowKey] && <div className="hint-box">Hint: {part1.value}</div>}
+                        {!showHints[rowKey]&&checkAnswers&&isRowBad&&
+                          <button className="hint-btn" onClick={()=>showHint(rowKey)}>Show hint</button>}
+                      </div>
+                      <div style={{display:'flex',gap:'6px'}}>
+                        {num2Parts.map((part2,col)=>{
+                          const pp=partialProducts.find(p=>p.row===row&&p.col===col);
+                          const cellKey=pp.id;
+                          const isOk=checkAnswers&&parseInt(userProducts[cellKey])===pp.product;
+                          const isBad=checkAnswers&&userProducts[cellKey]&&parseInt(userProducts[cellKey])!==pp.product;
+                          return (
+                            <div key={col} className={`p-cell ${isOk?'correct':isBad?'wrong':''}`}
+                              style={{
+                                width:Math.max((part2.value/totalNum2)*380,80)+'px',
+                                height:Math.max((part1.value/totalNum1)*280,70)+'px',
+                                minWidth:'80px',minHeight:'70px'
+                              }}>
+                              <input type="text" value={userProducts[cellKey]||''}
+                                onChange={e=>{ if(/^\d{0,6}$/.test(e.target.value)) setUserProducts(prev=>({...prev,[cellKey]:e.target.value})); }}
+                                className={`p-input cell ${isOk?'correct':isBad?'wrong':''}`}
+                                placeholder="?" disabled={allCorrect} />
+                              {showHints[cellKey] && <div className="hint-box">{part1.value}×{part2.value}={pp.product}</div>}
+                              {!showHints[cellKey]&&checkAnswers&&isBad&&
+                                <button className="hint-btn" onClick={()=>showHint(cellKey)}>Hint</button>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Final answer */}
+          <div className="section section-yellow">
+            <div className="section-title" style={{textAlign:'center'}}>Final Answer</div>
+            <div className="final-row">
+              <span className="final-eq">{num1} × {num2} =</span>
+              <input type="text" value={userFinalAnswer}
+                onChange={e=>{ if(/^\d{0,6}$/.test(e.target.value)) setUserFinalAnswer(e.target.value); }}
+                className={`final-input ${checkAnswers&&parseInt(userFinalAnswer)===finalAnswer?'correct':checkAnswers&&userFinalAnswer&&parseInt(userFinalAnswer)!==finalAnswer?'wrong':''}`}
+                placeholder="?" disabled={allCorrect} />
+              {checkAnswers&&userFinalAnswer&&parseInt(userFinalAnswer)===finalAnswer && <CheckIcon/>}
+              {checkAnswers&&userFinalAnswer&&parseInt(userFinalAnswer)!==finalAnswer && <XIcon/>}
+            </div>
+            {checkAnswers&&userFinalAnswer&&parseInt(userFinalAnswer)!==finalAnswer &&
+              <div className="hint-final">
+                <div>💡 Hint: Add all the partial products together</div>
+                {showHints['final'] &&
+                  <div className="hint-final-box">{partialProducts.map(p=>p.product).join(' + ')} = {finalAnswer}</div>}
+                {!showHints['final'] &&
+                  <button className="hint-btn" onClick={()=>showHint('final')}>Show calculation hint</button>}
+              </div>
+            }
+          </div>
+        </>}
+
+        {/* Info popup */}
+        {showInfoPopup &&
+          <div className="overlay" onClick={()=>setShowInfoPopup(false)}>
+            <div className="popup" onClick={e=>e.stopPropagation()}>
+              <div className="popup-header">
+                <span className="popup-title">Understanding the Area Model</span>
+                <button className="popup-close" onClick={()=>setShowInfoPopup(false)}>✕</button>
+              </div>
+              <div className="info-section">
+                <div className="info-h indigo">🔍 Why does this work?</div>
+                <p className="info-p">When you multiply two numbers, you're finding the area of a rectangle. By breaking it into smaller sections based on place value, each section's area becomes a partial product. The total area equals the sum of all these smaller areas.</p>
+              </div>
+              <div className="info-section">
+                <div className="info-h green">👁️ Visual Learning Benefits</div>
+                <p className="info-p">This model helps students see that multiplication isn't just memorized steps — it's about finding actual area! Students can visualize that {num1} × {num2} is the same as finding the total area by adding up all the smaller rectangular sections.</p>
+              </div>
+              <div className="info-section">
+                <div className="info-h blue">🧮 Connection to Algebra</div>
+                <p className="info-p">This directly demonstrates the distributive property:<br/>
+                  <span className="info-code">(a + b)(c + d) = ac + ad + bc + bd</span><br/>
+                  Each rectangle section represents one of these products!
+                </p>
+              </div>
+              <div className="info-section">
+                <div className="info-h purple">📊 How to Use This Tool</div>
+                <ul className="info-ul">
+                  <li>Enter any two numbers (up to 3 digits each)</li>
+                  <li>Click "Show Area Model" to see the rectangle divided by place value</li>
+                  <li>Watch as each section lights up with its partial product calculation</li>
+                  <li>See how all sections add up to the final answer</li>
+                  <li>Toggle calculations on/off to focus on the visual or include detailed math</li>
+                </ul>
+              </div>
+              <div className="info-section">
+                <div className="info-h red">🎯 Teaching Tips</div>
+                <ul className="info-ul">
+                  <li>Start with 2-digit × 2-digit problems for clarity</li>
+                  <li>Have students predict which section will be largest/smallest</li>
+                  <li>Connect to real-world area problems (garden plots, room carpeting, etc.)</li>
+                  <li>Show how this method works for any size numbers</li>
+                  <li>Emphasize that we're literally calculating the area of a rectangle</li>
+                </ul>
+              </div>
+              <div className="popup-footer">
+                <button className="btn btn-indigo" onClick={()=>setShowInfoPopup(false)}>Got it!</button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<PartialProductsApp/>);
+</script>
+</body>
+</html>
